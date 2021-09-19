@@ -1,0 +1,245 @@
+---
+title: "A0"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+```
+EJERCICIO 0
+
+Ejercicio 1
+
+Usando la función sample crea un vector dado_honesto con 100 números del 1 al 6. Haz una tabla de frecuencias absolutas (de dos maneras, con table y dplyr) y una tabla de frecuencias relativas.
+
+```{r} 
+dado_honesto = sample(1:6, 100, replace = TRUE)
+ 
+```
+
+Frecuencias absolutas -> con table 
+```{r}
+table(dado_honesto)
+```
+
+Frecuencias absolutas -> con dplyr
+```{r}
+library(dplyr)
+tabla<-data.frame(dado_honesto)
+tabla %>%
+  group_by(dado_honesto) %>%
+  summarise(frequency=n())
+```
+
+Frecuencias Relativas
+```{r}
+tabla %>%
+  group_by(dado_honesto) %>%
+  summarise(frequency=n()/100)
+
+```
+
+Ejercicio 2
+
+
+EJERCICIO 1. ANÁLISIS EXPLORATORIO DE UN CONJUNTO DE DATOS Y OPERACIONES CON DPLYR
+
+a) Carga el conjunto de datos en un data.frame de R llamado chlstrl.
+b) Cuántas observaciones contiene,cuáles son las variables y de qué tipos
+```{r}
+# Datos del fichero. La url, incluyendo el nombre del fichero.
+library(tidyverse)
+chlstrl<-read_csv("cholesterol.csv")
+
+glimpse(chlstrl)
+```
+
+Tal y como se puede comprobar en este conjunto de datos existen 7 columnas, las cuales son el genero, de tipo character, el colesterol, edad, peso ,altura, cintura y cadera, las cuales son de tipo double, numerico. El número de registros es 403.
+
+c) Asegúrate de comprobar si hay datos ausentes y localízalos en la tabla.
+
+```{r}
+apply(is.na(chlstrl),2,which)
+```
+
+
+Análisis de cada variable
+
+d) El análisis exploratorio (numérico y gráfico) debe cubrir todos los tipos de variable de la tabla. Es decir, que al menos debes estudiar una variable por cada tipo de variable presente en la tabla
+
+Se muestra la media de caada variable numérica
+
+```{r}
+library(tidyverse)
+chlstrl %>%
+  summarise(meanChol=mean(chol,na.rm=TRUE),
+            meanAge=mean(age,na.rm=TRUE),
+            meanHeight=mean(height,na.rm=TRUE),
+            meanWeight=mean(weight,na.rm=TRUE),
+            meanHip=mean(hip,na.rm=TRUE),
+            meanWaist=mean(waist,na.rm=TRUE))
+
+```
+Se muestran las medianas de cada variable 
+
+```{r}
+chlstrl %>%
+  summarise(medianChol=median(chol,na.rm=TRUE),
+            medianAge=median(age,na.rm=TRUE),
+            medianHeight=median(height,na.rm=TRUE),
+            medianWeight=median(weight,na.rm=TRUE),
+            medianHip=median(hip,na.rm=TRUE),
+            medianWaist=median(waist,na.rm=TRUE))
+```
+```{r}
+chlstrl %>%
+  summarise(varChol=var(chol,na.rm=TRUE),
+            varAge=var(age,na.rm=TRUE),
+            varHeight=var(height,na.rm=TRUE),
+            varWeight=var(weight,na.rm=TRUE),
+            varHip=var(hip,na.rm=TRUE),
+            varWaist=var(waist,na.rm=TRUE))
+```
+A continuación, se muestran los histogramas de algunas variables. Añadiendo la del género que es una variable categórica.
+
+```{r}
+# Histograma Variable Edad
+ggplot(data = chlstrl) + 
+  geom_histogram(mapping = aes(age),  
+                 fill = "orange", color="black")
+
+```
+```{r}
+
+ggplot(data = chlstrl,aes(x=gender)) + 
+  geom_bar(aes(y=..count..),stat="count",color="blue",fill="light blue")
+```
+
+e) Los valores de height y weight están en pulgadas (inches) y libras (pounds) respectivamente. Una libra son ≈ 0.454kg y una pulgada son ≈ 0.0254m. Usa dplyr para convertir esas columnas a metros y kilogramos respectivamente. Las nuevas columnas deben llamarse igual que las originales.
+ 
+```{r}
+chlstrl2 <- chlstrl %>% 
+  mutate(height = 0.0254 * height, weight=0.454*weight) 
+  
+```
+ 
+f) Ahora usa esos valores de height y weight para añadir una nueva columna llamada BMI
+
+
+
+```{r}
+chlstrl2 <- chlstrl2 %>% 
+  mutate(bmi = (weight) / (height^2)) 
+chlstrl2
+```
+ 
+ 
+ g) Crea una nueva columna llamada ageGroup dividiendo la edad en los siguientes tres niveles: (10,40], (40,70] , (70,100]
+ 
+```{r}
+func=function(x){
+  if(x<=40 & x>10){
+    return("(10,40]")
+  }else if(x>40 & x<=70){
+    return("(40,70]")
+  }else if(x>70 & x<=100){
+    return("(70,100]")
+  }
+
+}
+
+chlstrl2=chlstrl2 %>% 
+  mutate(ageGroup=func(age))
+chlstrl2
+```
+ EJERCICIO 2: FUNCIONES DE R
+ 
+ 
+ a)  Crea una función de R llamada cambiosSigno que dado un vector x de números enteros no nulos, como
+     -12,  -19,  9,  -13,  -14,  -17,  8,  -19,  -14,
+calcule cuántos cambios de signo ha habido. Es decir, cuántas veces el signo de un elemento es distinto del signo del elemento previo. Por ejemplo, en el vector anterior hay 4 cambios de signo (en las posiciones 3, 4, 7 y 8).
+
+
+```{r}
+cambiosSigno=function(x){
+  num_antiguo=x[1]
+  cambios=0
+  for(n in x){
+    if(n*num_antiguo<0){
+      cambios=cambios+1
+    }
+    num_antiguo=n
+  }
+  return(cambios)
+}
+
+vectorEjemplo =c(-12,-19,9,-13,-14,-17,8,-19,-14)
+cambiosSigno(vectorEjemplo)
+```
+
+ 
+b) Modifica la función para que devuelva como resultado las posiciones donde hay cambios de signo. Llama cambiosSignoPos(x) a esa otra función. Por ejemplo, para el vector anterior el resultado de esta función sería [1] 3 4 7 8
+También se valorará que incluyas en el código como usar sample para generar vectores aleatorios de 20 enteros no nulos (el vector debe poder tomar valores positivos y negativos).
+
+```{r}
+cambiosSignoPos=function(x){
+  num_antiguo=x[1]
+  lista=c()
+  for(n in 1:length(x)){
+    if(x[n]*num_antiguo<0){
+      lista=c(lista,n)
+    }
+    num_antiguo=x[n]
+  }
+  return(lista)
+}
+cambiosSignoPos(vectorEjemplo)
+
+```
+
+
+EJERCICIO 3. R4DS
+
+a) Recrea el código R necesario para generar los siguientes gráficos
+
+
+```{r,figures-side,fig.show="hold",out.width="50%"}
+library(datos)
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista)) +
+  geom_point() +
+  geom_smooth(se=FALSE)
+
+
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista)) +
+  geom_point() +
+  geom_smooth(mapping = aes(x = cilindrada, y = autopista, group = traccion),se=FALSE)
+
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista, color=traccion)) +
+  geom_point() +
+  geom_smooth(mapping = aes(x = cilindrada, y = autopista, group = traccion),se=FALSE)
+
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista)) +
+  geom_point(aes(color=traccion)) +
+  geom_smooth(mapping = aes(x = cilindrada, y = autopista), se=FALSE)
+
+
+
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista, group=traccion) ) +
+  geom_point(aes(color=traccion)) +
+  geom_smooth( mapping = aes(x = cilindrada, y = autopista, linetype = traccion),se=FALSE)
+
+
+ggplot(data = millas, mapping = aes(x = cilindrada, y = autopista, group=traccion) ) +
+  geom_point(size = 4, colour = "white") +
+  geom_point(aes(colour = traccion)) 
+
+```
+
+b) Haz el ejercicio 1 de la Sección 5.2.4 de R4DS. Encuentra todos los vuelos que: Tuvieron un retraso de llegada de dos o más horas
+
+```{r}
+filter(vuelos,atraso_llegada>=120)
+```
+
+
+
