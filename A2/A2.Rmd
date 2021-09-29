@@ -1,0 +1,210 @@
+---
+title: "Practica2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## EJERCICIO 1. SIMULANDO VARIABLES ALEATORIAS DISCRETAS
+
+### Apartado 1: La variable aleatoria discreta X1 tiene esta tabla de densidad de probabilidad (es la variable que se usa como ejemplo en la Sesión ):
+
+Calcula la media y la varianza teóricas de esta variable.
+
+```{r}
+library(viridisLite)
+X1 = sample(0:3, size = 10000, replace = TRUE, prob = c(64, 48, 12, 1))
+
+mean(X1)
+sd(X1)
+
+```
+
+
+### Apartado 2: Combina sample con replicate para simular cien mil muestras de tamaño 10 de esta variable X1.
+
+Estudia la distribución de las medias muestrales como hemos hecho en ejemplos previos, ilustrando con gráficas la distribución de esas medias muestrales. Cambia después el tamaño de la muestra a 30 y repite el análisis.
+
+
+
+```{r}
+library(ggplot2)
+mediasMuestrales = replicate(100000,{
+  muestra =sample(0:3, size = 10, replace = TRUE, prob = c(64, 48, 12, 1))
+  mean(muestra)
+  
+})
+hist(mediasMuestrales)
+```
+
+```{r}
+mediasMuestrales = replicate(100000,{
+  muestra =sample(0:3, size = 30, replace = TRUE, prob = c(64, 48, 12, 1))
+  mean(muestra)
+  
+})
+hist(mediasMuestrales)
+```
+
+### Apartado 3: La variable aleatoria discreta X2 tiene esta tabla de densidad de probabilidad:
+
+```{r}
+X2 = sample(0:2, size = 10000, replace = TRUE, prob = c(0.5, 0.25, 0.25))
+
+```
+
+Suponemos que X1 y X2 son independientes. ¿Qué valores puede tomar la suma X1 + X2? ¿Cuál es su tabla de probabilidad?
+
+
+Si X1 y X2 son independientes, los valores que pueden tomar son entre 0 y 5
+
+```{r}
+X3<-c(0,1,2,3,4,5)
+probSum<-c(0,0,0,0,0,0)
+X1 <- c(0,1,2,3)
+probX1 <- c(64/125,48/125,12/125,1/125)
+probX2 <- c(0.5, 0.25, 0.25)
+X2 <-c(0,1,2)
+for (num in X1){
+  for(num2 in X2){
+    probSum[num + num2 +1 ]= probSum[num + num2 +1] + probX2[num2+1]*probX1[num+1]
+    
+  }
+ 
+ 
+}
+
+
+probSum
+```
+
+
+### Apartado 4: Calcula la media teórica de la suma X1 + X2. Después usa sample y replicate para simular cien mil valores de esta variable suma. Calcula la media de esos valores. Advertencia: no es el mismo tipo de análisis que hemos hecho en el segundo apartado.
+
+```{r}
+media = sum(probSum*X3)
+media
+
+```
+
+```{r}
+muestra =sample(0:5, size = 10000, replace = TRUE, prob = probSum)
+mean(muestra)
+
+```
+
+
+## EJERCICIO 2. DATOS LIMPIOS
+
+Este fichero contiene las notas de los alumnos de una clase, que hicieron dos tests cada semana durante cinco semanas. La tabla de datos no cumple los principios de tidy data que hemos visto en clase. Tu tarea en este ejercicio es explicar por qué no se cumplen y obtener una tabla de datos limpios con la misma información usando tidyR.
+
+```{r}
+library(tidyverse)
+file_url <-   "https://gist.githubusercontent.com/fernandosansegundo/471b4887737cfcec7e9cf28631f2e21e/raw/b3944599d02df494f5903740db5acac9da35bc6f/testResults.csv"
+# Cambia la siguiente fila si quieres usar una subcarpeta del wd.
+local_folder <-  "./"
+# No cambies nada a partir de aquí
+file_name <- tail(unlist(strsplit(file_url, split = "/")), 1)
+localFile <-  paste0(local_folder, file_name)
+if(!file.exists(localFile)){
+  download.file(url = file_url, destfile = localFile)
+} else {
+  warning(paste0("Cuidado: el fichero de datos", localFile, " ya existe."))
+}
+
+data = read_csv("testResults.csv")
+
+summary(data)
+```
+```{r}
+
+data[1,]
+```
+
+Al observar un registro se comprueba como la tabla contiene una columna con dos variables, el genero y la edad. Para que la tabla pueda analizarse de manera adecuada es necesario la división de estas dos variables.
+
+
+```{r}
+newData<- data %>%
+  separate(gender_age, into=c('gender','age'),sep='_', convert=TRUE)
+
+newData
+```
+
+## EJERCICIO 3. LECTURA DE R4DS
+
+Haz el ejercicio 2 de la Sección 7.5.1.1 de R4DS. Las ideas de esa sección son importantes para nuestro trabajo de las próximas sesiones.
+
+
+### 2. ¿Qué variable del conjunto de datos de diamantes es más importante para predecir el precio de un diamante? ¿Cómo está correlacionada esta variable con el corte? ¿Por qué la combinación de estas dos relaciones conlleva que los diamantes de menor calidad sean más costosos?
+
+
+```{r}
+library(datos)
+?diamantes
+cor(x=diamantes$precio,y=diamantes$quilate)
+cor(x=diamantes$precio,y=diamantes$profundidad)
+cor(x=diamantes$precio,y=diamantes$tabla)
+cor(x=diamantes$precio,y=diamantes$x)
+cor(x=diamantes$precio,y=diamantes$y)
+cor(x=diamantes$precio,y=diamantes$z)
+```
+
+Tal y como se puede comprobar la correlación con el precio es mayor con el quilate, con lo cual la variable más explicativa para predecir el precio del diamante es el quilate
+
+```{r}
+
+ggplot(data=diamantes) +
+  geom_point(mapping=aes(x=quilate, y=corte)) 
+```
+Tal y como se comprueba en la gráfica, cuantos más quilates peor es el corte.Por ello, a menor corte mayor es el precio ya que su correlación es directamente proporcional. 
+
+
+Haz el ejercicio 4 de la Sección 12.6.1 de R4DS. ¡Aprovecha el código previo de esa sección para trabajar con datos limpios!
+
+### 4. Para cada país, año y sexo calcula el total del número de casos de tuberculosis. Crea una visualización informativa de los datos
+
+```{r}
+oms
+
+
+oms1 <- oms %>%
+  pivot_longer(
+    cols=nuevos_fpp_h014:nuevosrecaida_m65,
+    names_to="clave",
+    values_to="casos",
+    values_drop_na = TRUE
+  )
+oms1
+```
+```{r}
+oms2 <- oms1 %>%
+  mutate(clave=stringr::str_replace(clave,"nuevosrecaida", "nuevos_recaida"))
+oms2
+
+```
+
+```{r}
+oms3 <- oms2 %>%
+  separate(clave, c("nuevos", "tipo", "sexo_edad"), sep = "_")
+
+oms4 <- oms3 %>%
+  select(-nuevos,-iso2,-iso3)
+
+
+oms5 <- oms4 %>%
+  separate(sexo_edad, c("sexo", "edad"), sep = 1)
+oms5
+
+```
+
+```{r}
+oms5 %>%
+  group_by(pais,anio,sexo) %>%
+  summarise(casos=sum(casos)) %>%
+ggplot(aes(x=anio,y=casos),colour=sexo) +
+  geom_point()
+```
+
